@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+    --color-redy-100: #ff9999;
+    --color-redy-200: #b94a4c;
+    --color-redy-300: #b9030f;
+    --color-redy-350: #9e0004;
+    --color-redy-500: #7a0010;
+
+    --color-whity-100: #efefef;
+    --color-whity-200: #e1e3db;
+
+    --color-blacky-100: #3a3435;
+    --color-blacky-200: #2a2526;
+    --color-blacky-300: #1e1a1b;
+    --color-blacky-400: #141112;
+    --color-blacky-500: #0c090a;
+}

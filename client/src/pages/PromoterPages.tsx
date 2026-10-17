@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, BarChart3, CalendarDays, CheckCircle2, Clock3, Eye, FilePlus2, MapPin, MousePointer2, Plus, ShieldCheck, Users } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
@@ -7,6 +7,28 @@ import { accessTags } from '../data/mockData'
 import { useTanager } from '../hooks/useTanager'
 import type { AccessTag, EventCategory, EventItem } from '../types'
 import { EmptyState, PageTitle } from '../components/UI'
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import { type LeafletMouseEvent } from 'leaflet'
+import { CARAGUATUBA_CENTER, eventMarkerIcon } from '../constants/map'
+
+function MapPicker({ onSelect }: { onSelect: (lat: number, lng: number) => void }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!map) return
+    const handler = (e: LeafletMouseEvent) => {
+      const { lat, lng } = e.latlng
+      onSelect(lat, lng)
+    }
+    map.on('click', handler)
+    return () => {
+      map.off('click', handler)
+    }
+  }, [map, onSelect])
+
+  return null
+}
 
 export default function PromoterPages({ analyticsOnly = false }: { analyticsOnly?: boolean }) {
   const { events, user } = useTanager()
@@ -70,13 +92,20 @@ export function NewEventPage() {
   const [image, setImage] = useState('')
   const [tags, setTags] = useState<AccessTag[]>([])
   const [partners, setPartners] = useState('')
-  const [error, setError] = useState('')
+	  const [latitude, setLatitude] = useState(CARAGUATUBA_CENTER[0])
+	  const [longitude, setLongitude] = useState(CARAGUATUBA_CENTER[1])
+	  const [error, setError] = useState('')
+  const handleMapSelect = useCallback((lat: number, lng: number) => {
+    setLatitude(lat)
+    setLongitude(lng)
+  }, [])
+
   const toggleTag = (tag: AccessTag) => setTags((current) => current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag])
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
     const next: EventItem = {
-      id: `evento-${Date.now()}`, title, category, date, time, endTime, venue, address: address || venue, neighborhood,
+      id: `evento-${Date.now()}`, title, category, date, time, endTime, venue, address: address || venue, neighborhood, latitude, longitude,
       description, image: image || 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=85', price, tags, organizer: user?.name ?? 'Promotor local', status: 'pending', confirmations: 0, views: 0,
       ageRanges: [{ label: '18–24', value: 0 }, { label: '25–34', value: 0 }, { label: '35–44', value: 0 }, { label: '45+', value: 0 }],
       partners: partners ? partners.split(',').map((name) => ({ name: name.trim(), category: 'Comércio local', distance: 'Próximo', detail: 'Sugestão para completar o passeio' })).filter((partner) => partner.name) : [], createdBy: user?.name,
@@ -91,7 +120,7 @@ export function NewEventPage() {
     <PageTitle eyebrow="Novo evento" title="Conte pra cidade o que vai acontecer." description="Preencha os detalhes. A equipe Tanager revisará as informações antes de publicar." />
     <form className="event-form" onSubmit={submit}>
       <section className="form-section panel"><div className="form-section-title"><span>01</span><div><h2>O essencial</h2><p>As informações que ajudam as pessoas a encontrar seu evento.</p></div></div><div className="form-grid"><label className="form-wide">Nome do evento<input required maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex.: Festival de música à beira-mar" /><small>Escolha um nome claro e fácil de encontrar.</small></label><label>Categoria<select value={category} onChange={(e) => setCategory(e.target.value as EventCategory)}>{eventCategories.map((item) => <option key={item}>{item}</option>)}</select></label><label>Valor<input required value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Gratuito ou R$ 20" /></label><label className="form-wide">Descrição<textarea required minLength={20} maxLength={700} rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Conte o que torna esse encontro especial…" /><small>{description.length}/700 caracteres</small></label></div></section>
-      <section className="form-section panel"><div className="form-section-title"><span>02</span><div><h2>Quando e onde</h2><p>Ajude todo mundo a chegar e se programar.</p></div></div><div className="form-grid"><label>Data<input required type="date" min={new Date().toLocaleDateString('sv-SE')} value={date} onChange={(e) => setDate(e.target.value)} /></label><label>Local do evento<input required value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Nome do espaço ou praça" /></label><label>Horário de início<input required type="time" value={time} onChange={(e) => setTime(e.target.value)} /></label><label>Horário de término<input required type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} /></label><label className="form-wide">Endereço<input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Rua, número e referência" /></label><label>Bairro<input required value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Ex.: Centro" /></label></div></section>
+      <section className="form-section panel"><div className="form-section-title"><span>02</span><div><h2>Quando e onde</h2><p>Ajude todo mundo a chegar e se programar.</p></div></div><div className="form-grid"><label>Data<input required type="date" min={new Date().toLocaleDateString('sv-SE')} value={date} onChange={(e) => setDate(e.target.value)} /></label><label>Local do evento<input required value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Nome do espaço ou praça" /></label><label>Horário de início<input required type="time" value={time} onChange={(e) => setTime(e.target.value)} /></label><label>Horário de término<input required type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} /></label><label className="form-wide">Endereço<input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Rua, número e referência" /></label><label>Bairro<input required value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Ex.: Centro" /></label></div><div className="map-picker"><MapContainer center={[latitude, longitude]} zoom={16} style={{ height: '300px', width: '100%' }} attributionControl={false} zoomControl={false}><MapPicker onSelect={handleMapSelect} /><TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" /><Marker position={[latitude, longitude]} icon={eventMarkerIcon} /></MapContainer><div className="map-coords"><span><MapPin size={14} /></span><span>{latitude.toFixed(4)}, {longitude.toFixed(4)}</span></div></div></section>
       <section className="form-section panel"><div className="form-section-title"><span>03</span><div><h2>Inclusão e imagem</h2><p>Marque apenas os recursos disponíveis no local. Isso ajuda o público a escolher com confiança.</p></div></div><div className="form-grid"><label className="form-wide">Imagem do evento (link)<input type="url" value={image} onChange={(e) => setImage(e.target.value)} placeholder="https://…" /><small>Use uma imagem pública em formato JPG ou PNG.</small></label>{image && <img className="event-form-preview" src={image} alt="Prévia da imagem do evento" onError={(e) => { e.currentTarget.style.display = 'none' }} />}<fieldset className="form-wide access-fieldset"><legend>Recursos de acessibilidade confirmados</legend><div className="tag-checkbox-grid">{accessTags.map((tag) => <label key={tag} className={`tag-checkbox${tags.includes(tag) ? ' checked' : ''}`}><input type="checkbox" checked={tags.includes(tag)} onChange={() => toggleTag(tag)} /><span>{tag}</span></label>)}</div><small>Ao publicar, você confirma que esses recursos estarão disponíveis no evento.</small></fieldset><label className="form-wide">Comércios parceiros próximos<input value={partners} onChange={(e) => setPartners(e.target.value)} placeholder="Separe os nomes por vírgulas" /><small>Ex.: Café Caiçara, Empório local</small></label></div></section>
       {error && <p className="form-error form-submit-error">{error}</p>}<div className="form-submit-row"><p><ShieldCheck size={16} /> Seu evento será publicado após aprovação administrativa.</p><button className="button button-primary">Enviar para análise <ArrowRight size={16} /></button></div>
     </form>

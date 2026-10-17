@@ -6,6 +6,9 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useTanager } from '../hooks/useTanager'
 import { AccessPills, AttendeeCount, EventCard } from '../components/UI'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import { eventMarkerIcon, safeLatLng } from '../constants/map'
 
 export default function EventDetails() {
   const { id = '' } = useParams()
@@ -24,7 +27,20 @@ export default function EventDetails() {
       <div className="event-detail-main">
         <section className="detail-section"><div className="section-heading"><h2>Sobre o evento</h2><button className="icon-button share-button" onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch { setCopied(true); setTimeout(() => setCopied(false), 1800) } }} aria-label="Compartilhar evento"><Share2 size={17} /></button></div><p className="detail-description">{event.description}</p><div className="event-facts"><div><span>Quando</span><strong>{format(parseISO(event.date), "d 'de' MMMM", { locale: ptBR })}</strong><small>{event.time} – {event.endTime}</small></div><div><span>Quanto</span><strong>{event.price}</strong><small>Consulte a organização</small></div><div><span>Quem organiza</span><strong>{event.organizer}</strong><small>Promotor local</small></div></div>{copied && <span className="copy-feedback"><Check size={14} /> Link copiado</span>}</section>
         <section className="detail-section"><div className="detail-section-heading"><span className="detail-icon"><Heart size={18} /></span><div><h2>Acessibilidade e inclusão</h2><p>Informações declaradas pela organização do evento.</p></div></div>{event.tags.length ? <AccessPills tags={event.tags} limit={5} /> : <p className="muted-copy">A organização ainda não informou recursos de acessibilidade.</p>}</section>
-        <section className="detail-section"><div className="section-heading"><div><p className="eyebrow">Como chegar</p><h2>{event.venue}</h2></div><span className="neighborhood-label"><MapPin size={14} />{event.neighborhood}</span></div><p className="address-line">{event.address}, Caraguatatuba – SP</p><div className="mini-map map-placeholder" role="img" aria-label="Espaço reservado para o mapa do evento" /><Link className="text-link" to="/mapa">Ver outros eventos no mapa <ArrowRight size={15} /></Link></section>
+        <section className="detail-section"><div className="section-heading"><div><p className="eyebrow">Como chegar</p><h2>{event.venue}</h2></div><span className="neighborhood-label"><MapPin size={14} />{event.neighborhood}</span></div><p className="address-line">{event.address}, Caraguatatuba – SP</p><div className="mini-map">
+          <MapContainer
+            center={safeLatLng(event.latitude, event.longitude)}
+            zoom={15}
+            style={{ height: '100%', width: '100%' }}
+            attributionControl={false}
+            zoomControl={false}
+          >
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <Marker position={safeLatLng(event.latitude, event.longitude)} icon={eventMarkerIcon}>
+              <Popup>{event.venue}</Popup>
+            </Marker>
+          </MapContainer>
+        </div><Link className="text-link" to="/mapa">Ver outros eventos no mapa <ArrowRight size={15} /></Link></section>
         <section className="detail-section"><div className="detail-section-heading"><span className="detail-icon partner-icon">✳</span><div><h2>Complete seu passeio</h2><p>Parceiros locais pertinho do evento.</p></div></div>{event.partners.length ? <div className="partner-list">{event.partners.map((partner) => <article key={partner.name} className="partner-card"><span className="partner-symbol">{partner.name.charAt(0)}</span><span className="partner-copy"><strong>{partner.name}</strong><small>{partner.category} · {partner.distance}</small><span>{partner.detail}</span></span><ArrowRight size={16} /></article>)}</div> : <p className="muted-copy">Em breve, mais dicas locais perto deste evento.</p>}</section>
       </div>
       <aside className="detail-side"><div className="detail-ticket panel"><span className="eyebrow">Garanta seu lugar</span><h2>{event.price}</h2><AttendeeCount count={event.confirmations + (attending ? 1 : 0)} /><button className={`button ${attending ? 'button-confirmed' : 'button-primary'} attend-large`} onClick={() => toggleAttendance(event.id)}>{attending ? <><Check size={17} /> Presença confirmada</> : <><Sparkles size={17} /> Eu vou!</>}</button><p className="ticket-note"><Users size={14} /> Sua presença ajuda o evento a crescer.</p><div className="ticket-divider" /><p><Ticket size={15} /> Informação de lotação aproximada</p></div><div className="inclusive-note"><span>♡</span><div><strong>Caraguá é de todo mundo.</strong><p>Se precisar, fale com a organização antes de ir para confirmar os recursos de acessibilidade.</p></div></div></aside>

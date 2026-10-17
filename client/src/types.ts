@@ -13,6 +13,8 @@ export interface EventItem {
   venue: string
   address: string
   neighborhood: string
+  latitude: number
+  longitude: number
   description: string
   image: string
   price: string

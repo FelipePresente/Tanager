@@ -1,8 +1,7 @@
 import { Icon } from 'leaflet'
+import markerIconUrl from '../assets/map-marker.svg?url'
 
 export const CARAGUATUBA_CENTER = [-23.6223, -45.4131] as [number, number]
-
-export const markerIconUrl = new URL('../assets/map-marker.svg', import.meta.url).href
 
 export const eventMarkerIcon = new Icon({
   iconUrl: markerIconUrl,

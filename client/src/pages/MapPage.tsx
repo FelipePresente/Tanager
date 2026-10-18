@@ -24,7 +24,9 @@ function MapCenter({ selectedEvent }: { selectedEvent: EventItem | null }) {
 
 export default function MapPage() {
   const { events } = useTanager()
-  const mapEvents = useMemo(() => events.filter((event) => event.status === 'approved' && event.date >= new Date().toLocaleDateString('sv-SE')).slice(0, 7), [events, Date.now()])
+  const mapEvents = useMemo(() => events.filter((event) => event.status === 'approved' && event.date >= new Date().toLocaleDateString('sv-SE')).slice(0, 7), [events])
+  // Only events with valid coordinates can be placed on the map; others would make Leaflet throw.
+  const mapEventsWithCoords = useMemo(() => mapEvents.filter((event) => typeof event.latitude === 'number' && typeof event.longitude === 'number' && Number.isFinite(event.latitude) && Number.isFinite(event.longitude)), [mapEvents])
   const [selectedId, setSelectedId] = useState(mapEvents[0]?.id ?? '')
   const selected = mapEvents.find((event) => event.id === selectedId) ?? mapEvents[0] ?? null
 
@@ -43,7 +45,7 @@ export default function MapPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapCenter selectedEvent={selected} />
-          {mapEvents.map((event) => (
+          {mapEventsWithCoords.map((event) => (
             <Marker
               key={event.id}
               position={[event.latitude, event.longitude]}

@@ -136,7 +136,7 @@ h1, h2 { letter-spacing: -.045em; }
 .calendar-day.outside-month { color: #c8c1c1; }
 .calendar-day.today > span:first-child { color: var(--red); font-weight: 800; }
 .calendar-day.selected { color: white; background: var(--red); box-shadow: 0 4px 11px rgba(185,3,15,.18); }
-.calendar-day.selected > span:first-child { font-weight: 750; }
+.calendar-day.selected > span:first-child { color: white; font-weight: 750; }
 .calendar-day.selected .calendar-dot { background: white !important; }
 .calendar-dots { min-height: 5px; display: flex; align-items: center; gap: 3px; }
 .calendar-dot { width: 5px; height: 5px; display: inline-block; border-radius: 50%; background: #bd2330; }

@@ -25,7 +25,9 @@ function MapCenter({ selectedEvent }: { selectedEvent: EventItem | null }) {
 export default function MapPage() {
   const { events } = useTanager()
   const mapEvents = useMemo(() => events.filter((event) => event.status === 'approved' && event.date >= new Date().toLocaleDateString('sv-SE')).slice(0, 7), [events])
-  const [selectedId, setSelectedId] = useState(mapEvents[0]?.id ?? '')
+  // Only events with valid coordinates can be shown as map markers; others still appear in the sidebar.
+  const mapEventsWithCoords = useMemo(() => mapEvents.filter((event) => typeof event.latitude === 'number' && typeof event.longitude === 'number' && Number.isFinite(event.latitude) && Number.isFinite(event.longitude)), [mapEvents])
+  const [selectedId, setSelectedId] = useState(mapEventsWithCoords[0]?.id ?? mapEvents[0]?.id ?? '')
   const selected = mapEvents.find((event) => event.id === selectedId) ?? mapEvents[0] ?? null
 
   return <>
@@ -43,10 +45,10 @@ export default function MapPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapCenter selectedEvent={selected} />
-          {mapEvents.map((event) => (
+          {mapEventsWithCoords.map((event) => (
             <Marker
               key={event.id}
-              position={safeLatLng(event.latitude, event.longitude)}
+              position={[event.latitude, event.longitude]}
               icon={eventMarkerIcon}
               eventHandlers={{
                 click: () => setSelectedId(event.id),

@@ -5,10 +5,18 @@ import App from './App.tsx'
 import { TanagerProvider } from './hooks/useTanager.tsx'
 import './style.css'
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root')
+
+if (!rootElement) {
+  throw new Error('Elemento raiz "root" não foi encontrado no documento.')
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <BrowserRouter>
-      <TanagerProvider><App /></TanagerProvider>
+      <TanagerProvider>
+        <App />
+      </TanagerProvider>
     </BrowserRouter>
   </StrictMode>
 )

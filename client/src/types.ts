@@ -1,7 +1,34 @@
 export type UserRole = 'visitor' | 'consumer' | 'promoter' | 'admin'
-export type EventCategory = 'Música' | 'Cultura' | 'Gastronomia' | 'Natureza' | 'Esporte' | 'Família' | (string & {})
-export type AccessTag = 'Acessível para cadeira de rodas' | 'Libras' | 'Audiodescrição' | 'Pet friendly' | 'Espaço família'
+
+export type EventCategory =
+  | 'Música'
+  | 'Cultura'
+  | 'Gastronomia'
+  | 'Natureza'
+  | 'Esporte'
+  | 'Família'
+  | (string & {})
+
+export type AccessTag =
+  | 'Acessível para cadeira de rodas'
+  | 'Libras'
+  | 'Audiodescrição'
+  | 'Pet friendly'
+  | 'Espaço família'
+
 export type EventStatus = 'approved' | 'pending' | 'rejected'
+
+export interface EventAgeRange {
+  label: string
+  value: number
+}
+
+export interface EventPartner {
+  name: string
+  category: string
+  distance: string
+  detail: string
+}
 
 export interface EventItem {
   id: string
@@ -23,8 +50,8 @@ export interface EventItem {
   status: EventStatus
   confirmations: number
   views: number
-  ageRanges: { label: string; value: number }[]
-  partners: { name: string; category: string; distance: string; detail: string }[]
+  ageRanges: EventAgeRange[]
+  partners: EventPartner[]
   createdBy?: string
 }
 

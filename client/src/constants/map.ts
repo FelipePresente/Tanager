@@ -10,10 +10,17 @@ export const eventMarkerIcon = new Icon({
   popupAnchor: [0, -32],
 })
 
-/** Returns valid [lat, lng] or falls back to Caraguatuba center when coords are missing. */
-export function safeLatLng(lat: number | undefined, lng: number | undefined): [number, number] {
-  if (typeof lat === 'number' && typeof lng === 'number' && Number.isFinite(lat) && Number.isFinite(lng)) {
+/** Returns valid [lat, lng] or falls back to Caraguatatuba center when coords are missing. */
+export function safeLatLng(
+  lat: number | undefined,
+  lng: number | undefined
+): [number, number] {
+  const isValidLat = typeof lat === 'number' && Number.isFinite(lat)
+  const isValidLng = typeof lng === 'number' && Number.isFinite(lng)
+
+  if (isValidLat && isValidLng) {
     return [lat, lng]
   }
+
   return CARAGUATUBA_CENTER
 }

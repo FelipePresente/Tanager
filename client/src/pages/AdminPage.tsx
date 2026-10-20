@@ -1,28 +1,279 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Check, CheckCircle2, Clock3, FolderKanban, Plus, ShieldCheck, Trash2, Users, X } from 'lucide-react'
+import {
+  Check,
+  CheckCircle2,
+  Clock3,
+  FolderKanban,
+  Plus,
+  ShieldCheck,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { categories as defaultCategories } from '../data/mockData'
 import { useTanager } from '../hooks/useTanager'
 import { AccessPills, EmptyState, PageTitle } from '../components/UI'
 
-const demoAccounts = [{ id: 'a', name: 'Ana Costa', email: 'ana@exemplo.com', role: 'Público' }, { id: 'b', name: 'Maré Produções', email: 'promotor@exemplo.com', role: 'Promotor' }, { id: 'c', name: 'Cine Club Caraguá', email: 'cine@exemplo.com', role: 'Promotor' }]
+const demoAccounts = [
+  { id: 'a', name: 'Ana Costa', email: 'ana@exemplo.com', role: 'Público' },
+  { id: 'b', name: 'Maré Produções', email: 'promotor@exemplo.com', role: 'Promotor' },
+  { id: 'c', name: 'Cine Club Caraguá', email: 'cine@exemplo.com', role: 'Promotor' },
+]
 
 export default function AdminPage() {
   const { events, eventCategories, addCategory, removeCategory, moderateEvent } = useTanager()
   const [tab, setTab] = useState<'events' | 'categories' | 'accounts'>('events')
   const [newCategory, setNewCategory] = useState('')
-  const [suspended, setSuspended] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('tanager.admin.suspended.v1') ?? '[]') as string[] } catch { return [] } })
-  const pendingEvents = useMemo(() => events.filter((event) => event.status === 'pending'), [events])
-  const addCategoryFromForm = (event: FormEvent) => { event.preventDefault(); const nextName = newCategory.trim(); if (nextName) addCategory(nextName); setNewCategory('') }
-  useEffect(() => { localStorage.setItem('tanager.admin.suspended.v1', JSON.stringify(suspended)) }, [suspended])
 
-  return <>
-    <PageTitle eyebrow="Curadoria Tanager" title="Painel administrativo" description="Cuide do que aparece na agenda e ajude a manter a cidade bem informada." />
-    <div className="admin-welcome"><span className="admin-welcome-icon"><ShieldCheck size={22} /></span><div><strong>Área de administração</strong><p>Suas ações neste protótipo atualizam os dados mockados no navegador.</p></div><span className="admin-welcome-count"><Clock3 size={15} />{pendingEvents.length} pendentes</span></div>
-    <div className="admin-tabs" role="tablist"><button role="tab" aria-selected={tab === 'events'} className={tab === 'events' ? 'active' : ''} onClick={() => setTab('events')}><CheckCircle2 size={16} /> Eventos <span>{pendingEvents.length}</span></button><button role="tab" aria-selected={tab === 'categories'} className={tab === 'categories' ? 'active' : ''} onClick={() => setTab('categories')}><FolderKanban size={16} /> Categorias</button><button role="tab" aria-selected={tab === 'accounts'} className={tab === 'accounts' ? 'active' : ''} onClick={() => setTab('accounts')}><Users size={16} /> Contas</button></div>
-    {tab === 'events' && <section className="admin-content">{pendingEvents.length ? <div className="moderation-list">{pendingEvents.map((event) => <article key={event.id} className="moderation-card"><img src={event.image} alt="" /><div className="moderation-copy"><div className="moderation-card-top"><span className="event-category">{event.category}</span><span><Clock3 size={13} /> Enviado por {event.createdBy ?? event.organizer}</span></div><h2>{event.title}</h2><p>{event.description}</p><div className="moderation-meta"><span>{format(parseISO(event.date), "d 'de' MMMM, 'às' HH:mm", { locale: ptBR })}</span><span>{event.venue} · {event.neighborhood}</span><span>{event.price}</span></div><AccessPills tags={event.tags} limit={5} /><div className="moderation-actions"><button className="button button-reject" onClick={() => moderateEvent(event.id, 'rejected')}><X size={16} /> Recusar</button><button className="button button-approve" onClick={() => moderateEvent(event.id, 'approved')}><Check size={16} /> Aprovar e publicar</button></div></div></article>)}</div> : <EmptyState icon={<CheckCircle2 size={24} />} title="Tudo em dia por aqui" description="Novos eventos enviados pelos promotores vão aparecer nesta fila para análise." />}</section>}
-    {tab === 'categories' && <section className="admin-manage-panel panel"><div className="section-heading"><div><p className="eyebrow">Organização da agenda</p><h2>Categorias de eventos</h2></div><span className="admin-count-label">{eventCategories.length} categorias</span></div><p className="admin-helper">Use categorias claras para ajudar visitantes a encontrar programas do seu interesse.</p><form className="add-category-form" onSubmit={addCategoryFromForm}><input maxLength={30} required value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder="Nome da nova categoria" /><button className="button button-primary"><Plus size={16} /> Adicionar categoria</button></form><div className="managed-category-list">{eventCategories.map((category, index) => <div key={`${category}-${index}`} className="managed-category"><span className="category-color-dot" />{category}<span className="category-use-count">{index < 6 ? `${[12, 8, 5, 7, 4, 3][index]} eventos` : 'nova'}</span>{index >= defaultCategories.length && <button className="icon-button remove-category" onClick={() => removeCategory(category)} aria-label={`Remover categoria ${category}`}><Trash2 size={15} /></button>}</div>)}</div></section>}
-    {tab === 'accounts' && <section className="admin-manage-panel panel"><div className="section-heading"><div><p className="eyebrow">Comunidade Tanager</p><h2>Contas da plataforma</h2></div><span className="admin-count-label">{demoAccounts.length} contas</span></div><p className="admin-helper">Suspender uma conta remove temporariamente o acesso do perfil à plataforma.</p><div className="account-moderation-list">{demoAccounts.map((account) => { const isSuspended = suspended.includes(account.email); return <article key={account.id} className="account-moderation-row"><span className="account-avatar">{account.name.charAt(0)}</span><div className="account-moderation-copy"><strong>{account.name}</strong><span>{account.email}</span></div><span className="account-role-label">{account.role}</span><span className={`account-state${isSuspended ? ' suspended' : ''}`}>{isSuspended ? 'Suspensa' : 'Ativa'}</span><button className={`button ${isSuspended ? 'button-outline' : 'button-reject'} suspend-button`} onClick={() => setSuspended((current) => isSuspended ? current.filter((email) => email !== account.email) : [...current, account.email])}>{isSuspended ? 'Reativar' : 'Suspender'}</button></article> })}</div></section>}
-  </>
+  const [suspended, setSuspended] = useState<string[]>(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('tanager.admin.suspended.v1') ?? '[]'
+      ) as string[]
+    } catch {
+      return []
+    }
+  })
+
+  const pendingEvents = useMemo(
+    () => events.filter((event) => event.status === 'pending'),
+    [events]
+  )
+
+  useEffect(() => {
+    localStorage.setItem('tanager.admin.suspended.v1', JSON.stringify(suspended))
+  }, [suspended])
+
+  const addCategoryFromForm = (event: FormEvent) => {
+    event.preventDefault()
+    const nextName = newCategory.trim()
+
+    if (nextName) {
+      addCategory(nextName)
+    }
+
+    setNewCategory('')
+  }
+
+  const toggleAccountSuspension = (email: string) => {
+    setSuspended((current) =>
+      current.includes(email)
+        ? current.filter((item) => item !== email)
+        : [...current, email]
+    )
+  }
+
+  return (
+    <>
+      <PageTitle
+        eyebrow="Curadoria Tanager"
+        title="Painel administrativo"
+        description="Cuide do que aparece na agenda e ajude a manter a cidade bem informada."
+      />
+
+      <div className="admin-welcome">
+        <span className="admin-welcome-icon">
+          <ShieldCheck size={22} />
+        </span>
+        <div>
+          <strong>Área de administração</strong>
+          <p>Suas ações neste protótipo atualizam os dados mockados no navegador.</p>
+        </div>
+        <span className="admin-welcome-count">
+          <Clock3 size={15} />
+          {pendingEvents.length} pendentes
+        </span>
+      </div>
+
+      <div className="admin-tabs" role="tablist">
+        <button
+          role="tab"
+          aria-selected={tab === 'events'}
+          className={tab === 'events' ? 'active' : ''}
+          onClick={() => setTab('events')}
+        >
+          <CheckCircle2 size={16} /> Eventos <span>{pendingEvents.length}</span>
+        </button>
+
+        <button
+          role="tab"
+          aria-selected={tab === 'categories'}
+          className={tab === 'categories' ? 'active' : ''}
+          onClick={() => setTab('categories')}
+        >
+          <FolderKanban size={16} /> Categorias
+        </button>
+
+        <button
+          role="tab"
+          aria-selected={tab === 'accounts'}
+          className={tab === 'accounts' ? 'active' : ''}
+          onClick={() => setTab('accounts')}
+        >
+          <Users size={16} /> Contas
+        </button>
+      </div>
+
+      {tab === 'events' && (
+        <section className="admin-content">
+          {pendingEvents.length ? (
+            <div className="moderation-list">
+              {pendingEvents.map((event) => (
+                <article key={event.id} className="moderation-card">
+                  <img src={event.image} alt="" />
+
+                  <div className="moderation-copy">
+                    <div className="moderation-card-top">
+                      <span className="event-category">{event.category}</span>
+                      <span>
+                        <Clock3 size={13} /> Enviado por {event.createdBy ?? event.organizer}
+                      </span>
+                    </div>
+
+                    <h2>{event.title}</h2>
+                    <p>{event.description}</p>
+
+                    <div className="moderation-meta">
+                      <span>
+                        {format(parseISO(event.date), "d 'de' MMMM, 'às' HH:mm", {
+                          locale: ptBR,
+                        })}
+                      </span>
+                      <span>
+                        {event.venue} · {event.neighborhood}
+                      </span>
+                      <span>{event.price}</span>
+                    </div>
+
+                    <AccessPills tags={event.tags} limit={5} />
+
+                    <div className="moderation-actions">
+                      <button
+                        className="button button-reject"
+                        onClick={() => moderateEvent(event.id, 'rejected')}
+                      >
+                        <X size={16} /> Recusar
+                      </button>
+                      <button
+                        className="button button-approve"
+                        onClick={() => moderateEvent(event.id, 'approved')}
+                      >
+                        <Check size={16} /> Aprovar e publicar
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={<CheckCircle2 size={24} />}
+              title="Tudo em dia por aqui"
+              description="Novos eventos enviados pelos promotores vão aparecer nesta fila para análise."
+            />
+          )}
+        </section>
+      )}
+
+      {tab === 'categories' && (
+        <section className="admin-manage-panel panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Organização da agenda</p>
+              <h2>Categorias de eventos</h2>
+            </div>
+            <span className="admin-count-label">{eventCategories.length} categorias</span>
+          </div>
+
+          <p className="admin-helper">
+            Use categorias claras para ajudar visitantes a encontrar programas do seu interesse.
+          </p>
+
+          <form className="add-category-form" onSubmit={addCategoryFromForm}>
+            <input
+              maxLength={30}
+              required
+              value={newCategory}
+              onChange={(event) => setNewCategory(event.target.value)}
+              placeholder="Nome da nova categoria"
+            />
+            <button className="button button-primary">
+              <Plus size={16} /> Adicionar categoria
+            </button>
+          </form>
+
+          <div className="managed-category-list">
+            {eventCategories.map((category, index) => (
+              <div key={`${category}-${index}`} className="managed-category">
+                <span className="category-color-dot" />
+                {category}
+                <span className="category-use-count">
+                  {index < 6 ? `${[12, 8, 5, 7, 4, 3][index]} eventos` : 'nova'}
+                </span>
+
+                {index >= defaultCategories.length && (
+                  <button
+                    className="icon-button remove-category"
+                    onClick={() => removeCategory(category)}
+                    aria-label={`Remover categoria ${category}`}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === 'accounts' && (
+        <section className="admin-manage-panel panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Comunidade Tanager</p>
+              <h2>Contas da plataforma</h2>
+            </div>
+            <span className="admin-count-label">{demoAccounts.length} contas</span>
+          </div>
+
+          <p className="admin-helper">
+            Suspender uma conta remove temporariamente o acesso do perfil à plataforma.
+          </p>
+
+          <div className="account-moderation-list">
+            {demoAccounts.map((account) => {
+              const isSuspended = suspended.includes(account.email)
+
+              return (
+                <article key={account.id} className="account-moderation-row">
+                  <span className="account-avatar">{account.name.charAt(0)}</span>
+
+                  <div className="account-moderation-copy">
+                    <strong>{account.name}</strong>
+                    <span>{account.email}</span>
+                  </div>
+
+                  <span className="account-role-label">{account.role}</span>
+                  <span className={`account-state${isSuspended ? ' suspended' : ''}`}>
+                    {isSuspended ? 'Suspensa' : 'Ativa'}
+                  </span>
+
+                  <button
+                    className={`button ${
+                      isSuspended ? 'button-outline' : 'button-reject'
+                    } suspend-button`}
+                    onClick={() => toggleAccountSuspension(account.email)}
+                  >
+                    {isSuspended ? 'Reativar' : 'Suspender'}
+                  </button>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+      )}
+    </>
+  )
 }
